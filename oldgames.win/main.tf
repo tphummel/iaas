@@ -6,15 +6,39 @@ terraform {
       version = "~> 3.0"
     }
   }
+  cloud {
+    organization = "tom-hummel"
+    workspaces {
+      name = "oldgames-win"
+    }
+  }
+}
+variable "oldgameswin_account_id" {}
+
+# requires CLOUDFLARE_API_KEY env var
+provider "cloudflare" {}
+
+resource "cloudflare_zone" "oldgames_win" {
+  account_id = var.oldgameswin_account_id
+  zone       = "oldgames.win"
 }
 
-variable "oldgameswin_cloudflare_api_token" {}
-variable "oldgameswin_account_id" {}
-variable "oldgameswin_zone_id" {}
+resource "cloudflare_record" "cname" {
+  zone_id = cloudflare_zone.oldgames_win.id
+  name    = "oldgames.win"
+  value   = "video-game-quality.pages.dev"
+  type    = "CNAME"
+  ttl     = 1
+  proxied = true
+}
 
-
-provider "cloudflare" {
-  api_token = var.oldgameswin_cloudflare_api_token
+resource "cloudflare_record" "txt" {
+  zone_id = cloudflare_zone.oldgames_win.id
+  name    = "oldgames.win"
+  value   = "google-site-verification=syOULjauRiMwyK-1XcouVnXK6bISQoaNiL4MdTGvna0"
+  type    = "TXT"
+  ttl     = 1
+  proxied = false
 }
 
 resource "cloudflare_pages_project" "oldgames_win" {
