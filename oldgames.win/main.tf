@@ -6,6 +6,12 @@ terraform {
       version = "~> 3.0"
     }
   }
+  cloud {
+    organization = "tom-hummel"
+    workspaces {
+      name = "oldgames-win"
+    }
+  }
 }
 variable "oldgameswin_account_id" {}
 
