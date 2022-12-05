@@ -6,11 +6,18 @@ terraform {
       version = "~> 3.0"
     }
   }
+  cloud {
+    organization = "tom-hummel"
+
+    workspaces {
+      name = "oldgames-win"
+    }
+  }
 }
 
-variable "oldgameswin_cloudflare_api_token" {}
-variable "oldgameswin_account_id" {}
-variable "oldgameswin_zone_id" {}
+variable "oldgameswin_cloudflare_api_token" { }
+variable "oldgameswin_account_id" { }
+variable "oldgameswin_zone_id" { }
 
 
 provider "cloudflare" {
@@ -23,19 +30,20 @@ resource "cloudflare_pages_project" "oldgames_win" {
   production_branch = "main"
   build_config {
     build_command       = "hugo"
-    destination_dir     = "/public"
-    root_dir            = "/"
+    destination_dir     = "public"
+    root_dir            = ""
   }
   source {
     type = "github"
     config {
       owner                         = "tphummel"
-      repo_name                     = "oldgames.win"
+      repo_name                     = "video-game-quality"
       production_branch             = "main"
       pr_comments_enabled           = true
       deployments_enabled           = true
       production_deployment_enabled = true
       preview_deployment_setting    = "all"
+      preview_branch_includes       = ["*"]
     }
   }
   deployment_configs {
