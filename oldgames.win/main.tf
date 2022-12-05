@@ -7,8 +7,6 @@ terraform {
     }
   }
 }
-
-variable "oldgameswin_cloudflare_api_token" {}
 variable "oldgameswin_account_id" {}
 
 # requires CLOUDFLARE_API_KEY env var
