@@ -92,13 +92,52 @@ resource "cloudflare_record" "www" {
   proxied = true
 }
 
-resource "cloudflare_record" "cname-proxied" {
-  for_each = {
-    "data"          = "data.tomhummel.com.s3-website-us-east-1.amazonaws.com"
+resource "cloudflare_pages_project" "data" {
+  account_id        = var.tomhummel_com_account_id
+  name              = "data-tomhummel-com"
+  production_branch = "main"
+  build_config {
+    build_command   = "git submodule update --init --recursive && hugo"
+    destination_dir = "public"
+    root_dir        = ""
   }
+  source {
+    type = "github"
+    config {
+      owner                         = "tphummel"
+      repo_name                     = "data.tomhummel.com"
+      production_branch             = "main"
+      pr_comments_enabled           = true
+      deployments_enabled           = true
+      production_deployment_enabled = true
+      preview_deployment_setting    = "all"
+      preview_branch_includes       = ["*"]
+    }
+  }
+  deployment_configs {
+    preview {
+      environment_variables = {
+        HUGO_VERSION = "0.96.0"
+      }
+    }
+    production {
+      environment_variables = {
+        HUGO_VERSION = "0.96.0"
+      }
+    }
+  }
+}
+
+resource "cloudflare_pages_domain" "data" {
+  account_id   = var.tomhummel_com_account_id
+  project_name = cloudflare_pages_project.data.name
+  domain       = "data.tomhummel.com"
+}
+
+resource "cloudflare_record" "data" {
   zone_id = cloudflare_zone.tomhummel_com.id
-  name    = each.key
-  value   = each.value
+  name    = cloudflare_pages_domain.data.domain
+  value   = cloudflare_pages_project.data.subdomain
   type    = "CNAME"
   ttl     = 1
   proxied = true
