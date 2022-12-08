@@ -95,7 +95,7 @@ resource "cloudflare_record" "www" {
 resource "cloudflare_pages_project" "data" {
   account_id        = var.tomhummel_com_account_id
   name              = "data-tomhummel-com"
-  production_branch = "main"
+  production_branch = "master"
   build_config {
     build_command   = "git submodule update --init --recursive && hugo"
     destination_dir = "public"
