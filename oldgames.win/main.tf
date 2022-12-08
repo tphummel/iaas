@@ -15,7 +15,7 @@ terraform {
 }
 variable "oldgameswin_account_id" {}
 
-# requires CLOUDFLARE_API_KEY env var
+# requires CLOUDFLARE_API_TOKEN env var
 provider "cloudflare" {}
 
 resource "cloudflare_zone" "oldgames_win" {
