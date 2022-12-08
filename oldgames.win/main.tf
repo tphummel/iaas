@@ -84,3 +84,9 @@ resource "cloudflare_pages_domain" "oldgames_win" {
   project_name = cloudflare_pages_project.oldgames_win.name
   domain       = "oldgames.win"
 }
+
+resource "cloudflare_pages_domain" "www_oldgames_win" {
+  account_id   = var.oldgameswin_account_id
+  project_name = cloudflare_pages_project.oldgames_win.name
+  domain       = "www.oldgames.win"
+}
