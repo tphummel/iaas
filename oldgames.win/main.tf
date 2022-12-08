@@ -26,7 +26,7 @@ resource "cloudflare_zone" "oldgames_win" {
 resource "cloudflare_record" "cname" {
   zone_id = cloudflare_zone.oldgames_win.id
   name    = "oldgames.win"
-  value   = "video-game-quality.pages.dev"
+  value   = cloudflare_pages_project.oldgames_win.subdomain
   type    = "CNAME"
   ttl     = 1
   proxied = true
