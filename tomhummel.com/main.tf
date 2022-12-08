@@ -26,11 +26,75 @@ resource "cloudflare_zone" "tomhummel_com" {
   zone       = "tomhummel.com"
 }
 
+resource "cloudflare_pages_project" "apex" {
+  account_id        = var.tomhummel_com_account_id
+  name              = "tomhummel-com"
+  production_branch = "main"
+  build_config {
+    build_command   = "git submodule update --init --recursive && hugo"
+    destination_dir = "public"
+    root_dir        = ""
+  }
+  source {
+    type = "github"
+    config {
+      owner                         = "tphummel"
+      repo_name                     = "blog"
+      production_branch             = "main"
+      pr_comments_enabled           = true
+      deployments_enabled           = true
+      production_deployment_enabled = true
+      preview_deployment_setting    = "all"
+      preview_branch_includes       = ["*"]
+    }
+  }
+  deployment_configs {
+    preview {
+      environment_variables = {
+        HUGO_VERSION = "0.87.0"
+      }
+    }
+    production {
+      environment_variables = {
+        HUGO_VERSION = "0.87.0"
+      }
+    }
+  }
+}
+
+resource "cloudflare_pages_domain" "apex" {
+  account_id   = var.tomhummel_com_account_id
+  project_name = cloudflare_pages_project.apex.name
+  domain       = "tomhummel.com"
+}
+
+resource "cloudflare_record" "apex" {
+  zone_id = cloudflare_zone.tomhummel_com.id
+  name    = cloudflare_pages_domain.apex.domain
+  value   = cloudflare_pages_project.apex.subdomain
+  type    = "CNAME"
+  ttl     = 1
+  proxied = true
+}
+
+resource "cloudflare_pages_domain" "www" {
+  account_id   = var.tomhummel_com_account_id
+  project_name = cloudflare_pages_project.apex.name
+  domain       = "www.tomhummel.com"
+}
+
+resource "cloudflare_record" "www" {
+  zone_id = cloudflare_zone.tomhummel_com.id
+  name    = cloudflare_pages_domain.www.domain
+  value   = cloudflare_pages_project.apex.subdomain
+  type    = "CNAME"
+  ttl     = 1
+  proxied = true
+}
+
 resource "cloudflare_record" "cname-proxied" {
   for_each = {
     "data"          = "data.tomhummel.com.s3-website-us-east-1.amazonaws.com"
-    "tomhummel.com" = "tomhummel.com.s3-website-us-east-1.amazonaws.com"
-    "www"           = "www.tomhummel.com.s3-website-us-east-1.amazonaws.com"
   }
   zone_id = cloudflare_zone.tomhummel_com.id
   name    = each.key
