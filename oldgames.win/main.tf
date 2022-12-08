@@ -23,15 +23,6 @@ resource "cloudflare_zone" "oldgames_win" {
   zone       = "oldgames.win"
 }
 
-resource "cloudflare_record" "cname" {
-  zone_id = cloudflare_zone.oldgames_win.id
-  name    = "oldgames.win"
-  value   = cloudflare_pages_project.oldgames_win.subdomain
-  type    = "CNAME"
-  ttl     = 1
-  proxied = true
-}
-
 resource "cloudflare_record" "txt" {
   zone_id = cloudflare_zone.oldgames_win.id
   name    = "oldgames.win"
@@ -85,8 +76,26 @@ resource "cloudflare_pages_domain" "oldgames_win" {
   domain       = "oldgames.win"
 }
 
+resource "cloudflare_record" "cname" {
+  zone_id = cloudflare_zone.oldgames_win.id
+  name    = cloudflare_pages_domain.oldgames_win.domain
+  value   = cloudflare_pages_project.oldgames_win.subdomain
+  type    = "CNAME"
+  ttl     = 1
+  proxied = true
+}
+
 resource "cloudflare_pages_domain" "www_oldgames_win" {
   account_id   = var.oldgameswin_account_id
   project_name = cloudflare_pages_project.oldgames_win.name
   domain       = "www.oldgames.win"
+}
+
+resource "cloudflare_record" "www_oldgames_win" {
+  zone_id = cloudflare_zone.oldgames_win.id
+  name    = cloudflare_pages_domain.www_oldgames_win.domain
+  value   = cloudflare_pages_project.oldgames_win.subdomain
+  type    = "CNAME"
+  ttl     = 1
+  proxied = true
 }
