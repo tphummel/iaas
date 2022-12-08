@@ -106,7 +106,7 @@ resource "cloudflare_pages_project" "data" {
     config {
       owner                         = "tphummel"
       repo_name                     = "data.tomhummel.com"
-      production_branch             = "main"
+      production_branch             = "master"
       pr_comments_enabled           = true
       deployments_enabled           = true
       production_deployment_enabled = true
