@@ -10,6 +10,7 @@ variable "availability_domain" {}
 variable "ssh_public_key_path" {}
 
 terraform {
+  required_version = "= 1.3.7"
   required_providers {
     oci = {
       source = "oracle/oci"
