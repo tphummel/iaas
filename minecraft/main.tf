@@ -4,7 +4,7 @@ variable "user_ocid" {}
 variable "fingerprint" {}
 variable "private_key_path" {}
 variable "region" {
-  default = "us-phoenix-1"
+  default = "us-ashburn-1"
 }
 variable "availability_domain" {}
 variable "ssh_public_key_path" {}
@@ -38,8 +38,7 @@ provider "oci" {
 locals {
   project_name = "minecraft"
   instance_shape = "VM.Standard.A1.Flex"
-  # oracle autonomous linux - aarch64 - phoenix
-  image_ocid = "ocid1.image.oc1.phx.aaaaaaaabwy4p5lhyv7jxxnfxajyedt63by7xbkvmw7kiwkw2ogahizrizmq"
+  image_ocid = "ocid1.image.oc1.iad.aaaaaaaabr2p2s6fnh5kf4u77y7se2kmaieuzjhqfmjwquw3csgq32i6kx5a"
   vcn_subnet_cidr = "10.88.0.0/30"
 }
 
@@ -118,6 +117,17 @@ resource "oci_core_security_list" "mc" {
     }
   }
 
+  ingress_security_rules {
+    # Options are supported only for ICMP ("1"), TCP ("6"), UDP ("17"), and ICMPv6 ("58").
+    protocol = 17
+    source   = "0.0.0.0/0"
+  
+    udp_options {
+      max = 25565
+      min = 25565
+    }
+  }
+
   vcn_id = oci_core_vcn.mc.id
 }
 
@@ -167,7 +177,7 @@ resource "oci_core_instance" "mc" {
     source_id               = local.image_ocid
   }
   shape_config {
-    memory_in_gbs = 4
+    memory_in_gbs = 6
     ocpus = 1
   }
 
