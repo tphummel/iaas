@@ -8,15 +8,13 @@ async function handleRequest(event) {
   <p>a kv. key: ${kvKey}, value:${kvValue} </p>`;
 
   const kvDebugLoggingKey = 'debug_output_enabled';
-  const debugLoggingEnabled = await KV_CF_HELLO.get(kvkvDebugLoggingKeyKey);
+  const debugLoggingEnabled = await KV_CF_HELLO.get(kvDebugLoggingKey);
 
   if (debugLoggingEnabled === 'true') {
     const { pathname } = new URL(event.request.url)
     const cf = event.request.cf !== undefined ? event.request.cf : {}
     const headers = new Map(event.request.headers)
     const debugInfo = {
-      battlesnake: BATTLESNAKE_NAME, // eslint-disable-line
-      battlesnake_version: BATTLESNAKE_VERSION, // eslint-disable-line
       req_method: event.request.method,
       req_pathname: pathname,
       req_lat: cf.latitude,

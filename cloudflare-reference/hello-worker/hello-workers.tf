@@ -41,7 +41,7 @@ resource "cloudflare_workers_kv" "debug_output" {
   account_id   = var.cloudflare_account_id
   namespace_id = cloudflare_workers_kv_namespace.hello.id
   key          = "debug_output_enabled"
-  value        = "true"
+  value        = "false"
 }
 
 # resource "cloudflare_r2_bucket" "hello" {
