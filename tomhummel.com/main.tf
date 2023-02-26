@@ -18,8 +18,14 @@ variable "tomhummel_com_account_id" {
   type = string
 }
 
-# requires CLOUDFLARE_API_TOKEN env var
-provider "cloudflare" {}
+variable "cloudflare_api_token" {
+  type      = string
+  sensitive = true
+}
+
+provider "cloudflare" {
+  api_token = var.cloudflare_api_token
+}
 
 resource "cloudflare_zone" "tomhummel_com" {
   account_id = var.tomhummel_com_account_id
@@ -143,6 +149,11 @@ resource "cloudflare_record" "data" {
   proxied = true
 }
 
+variable "wordle_honeycomb_key" {
+  type      = string
+  sensitive = true
+}
+
 resource "cloudflare_pages_project" "wordle" {
   account_id        = var.tomhummel_com_account_id
   name              = "wordle"
@@ -168,13 +179,17 @@ resource "cloudflare_pages_project" "wordle" {
   deployment_configs {
     preview {
       environment_variables = {
-        HUGO_VERSION = "0.87.0"
+        HUGO_VERSION      = "0.87.0"
+        HONEYCOMB_DATASET = "cloudflare-wordle-tomhummel-com-preview"
+        HONEYCOMB_KEY     = var.wordle_honeycomb_key
       }
       compatibility_date = "2022-08-15"
     }
     production {
       environment_variables = {
-        HUGO_VERSION = "0.87.0"
+        HUGO_VERSION      = "0.87.0"
+        HONEYCOMB_DATASET = "cloudflare-wordle-tomhummel-com"
+        HONEYCOMB_KEY     = var.wordle_honeycomb_key
       }
       compatibility_date = "2022-08-16"
     }
@@ -195,6 +210,8 @@ resource "cloudflare_record" "wordle" {
   ttl     = 1
   proxied = true
 }
+
+
 
 resource "cloudflare_pages_project" "movies" {
   account_id        = var.tomhummel_com_account_id
