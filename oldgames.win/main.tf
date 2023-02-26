@@ -14,7 +14,10 @@ terraform {
   }
 }
 variable "oldgameswin_account_id" {}
-variable "cloudflare_api_token" {}
+variable "cloudflare_api_token" {
+  type = string
+  sensitive = true
+}
 
 provider "cloudflare" {
   api_token = var.cloudflare_api_token
@@ -34,6 +37,16 @@ resource "cloudflare_record" "txt" {
   proxied = false
 }
 
+variable web_analytics_tag {
+  type = string
+  sensitive = true
+}
+
+variable web_analytics_token {
+  type = string
+  sensitive = true
+}
+
 resource "cloudflare_pages_project" "oldgames_win" {
   account_id        = var.oldgameswin_account_id
   name              = "oldgameswin"
@@ -41,7 +54,9 @@ resource "cloudflare_pages_project" "oldgames_win" {
   build_config {
     build_command   = "hugo"
     destination_dir = "public"
-    root_dir        = ""
+    root_dir        = "/"
+    web_analytics_tag = var.web_analytics_tag
+    web_analytics_token = var.web_analytics_token
   }
   source {
     type = "github"
