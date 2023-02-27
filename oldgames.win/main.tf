@@ -39,7 +39,6 @@ resource "cloudflare_record" "txt" {
 
 variable web_analytics_tag {
   type = string
-  sensitive = true
 }
 
 variable web_analytics_token {

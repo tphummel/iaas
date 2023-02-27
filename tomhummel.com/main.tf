@@ -5,6 +5,10 @@ terraform {
       source  = "cloudflare/cloudflare"
       version = "~> 3.0"
     }
+    aws = {
+      source = "hashicorp/aws"
+      version = "~> 4.0"
+    }
   }
   cloud {
     organization = "tom-hummel"
@@ -32,6 +36,15 @@ resource "cloudflare_zone" "tomhummel_com" {
   zone       = "tomhummel.com"
 }
 
+variable apex_web_analytics_tag {
+  type = string
+}
+
+variable apex_web_analytics_token {
+  type = string
+  sensitive = true
+}
+
 resource "cloudflare_pages_project" "apex" {
   account_id        = var.tomhummel_com_account_id
   name              = "tomhummel-com"
@@ -40,6 +53,8 @@ resource "cloudflare_pages_project" "apex" {
     build_command   = "git submodule update --init --recursive && hugo"
     destination_dir = "public"
     root_dir        = ""
+    web_analytics_tag = var.apex_web_analytics_tag
+    web_analytics_token = var.apex_web_analytics_token
   }
   source {
     type = "github"
@@ -56,11 +71,13 @@ resource "cloudflare_pages_project" "apex" {
   }
   deployment_configs {
     preview {
+      fail_open = true
       environment_variables = {
         HUGO_VERSION = "0.87.0"
       }
     }
     production {
+      fail_open = true
       environment_variables = {
         HUGO_VERSION = "0.87.0"
       }
@@ -98,6 +115,15 @@ resource "cloudflare_record" "www" {
   proxied = true
 }
 
+variable data_web_analytics_tag {
+  type = string
+}
+
+variable data_web_analytics_token {
+  type = string
+  sensitive = true
+}
+
 resource "cloudflare_pages_project" "data" {
   account_id        = var.tomhummel_com_account_id
   name              = "data-tomhummel-com"
@@ -106,6 +132,8 @@ resource "cloudflare_pages_project" "data" {
     build_command   = "git submodule update --init --recursive && hugo"
     destination_dir = "public"
     root_dir        = ""
+    web_analytics_tag = var.data_web_analytics_tag
+    web_analytics_token = var.data_web_analytics_token
   }
   source {
     type = "github"
@@ -122,11 +150,13 @@ resource "cloudflare_pages_project" "data" {
   }
   deployment_configs {
     preview {
+      fail_open = true
       environment_variables = {
         HUGO_VERSION = "0.96.0"
       }
     }
     production {
+      fail_open = true
       environment_variables = {
         HUGO_VERSION = "0.96.0"
       }
@@ -154,6 +184,45 @@ variable "wordle_honeycomb_key" {
   sensitive = true
 }
 
+variable "cloudflare_r2_access_key" {
+  type      = string
+  sensitive = true
+}
+
+variable "cloudflare_r2_secret_key" {
+  type      = string
+  sensitive = true
+}
+
+# https://developers.cloudflare.com/r2/examples/terraform/
+provider "aws" {
+  access_key = var.cloudflare_r2_access_key
+  secret_key = var.cloudflare_r2_secret_key
+  skip_credentials_validation = true
+  skip_region_validation = true
+  skip_requesting_account_id = true
+  endpoints {
+    s3 = "https://${var.tomhummel_com_account_id}.r2.cloudflarestorage.com"
+  }
+}
+
+resource "aws_s3_bucket" "wordle_contest_entries_preview" {
+  bucket = "wordle-contest-entries-preview"
+}
+
+resource "aws_s3_bucket" "wordle_contest_entries" {
+  bucket = "wordle-contest-entries"
+}
+
+variable wordle_web_analytics_tag {
+  type = string
+}
+
+variable wordle_web_analytics_token {
+  type = string
+  sensitive = true
+}
+
 resource "cloudflare_pages_project" "wordle" {
   account_id        = var.tomhummel_com_account_id
   name              = "wordle"
@@ -161,7 +230,9 @@ resource "cloudflare_pages_project" "wordle" {
   build_config {
     build_command   = "git submodule update --init --recursive && hugo"
     destination_dir = "public"
-    root_dir        = ""
+    root_dir        = "/"
+    web_analytics_tag = var.wordle_web_analytics_tag
+    web_analytics_token = var.wordle_web_analytics_token
   }
   source {
     type = "github"
@@ -178,18 +249,26 @@ resource "cloudflare_pages_project" "wordle" {
   }
   deployment_configs {
     preview {
+      fail_open = true
       environment_variables = {
         HUGO_VERSION      = "0.87.0"
         HONEYCOMB_DATASET = "cloudflare-wordle-tomhummel-com-preview"
         HONEYCOMB_KEY     = var.wordle_honeycomb_key
       }
+      r2_buckets = {
+        "WORDLE_CONTEST_ENTRIES" = aws_s3_bucket.wordle_contest_entries_preview.id
+      }
       compatibility_date = "2022-08-15"
     }
     production {
+      fail_open = true
       environment_variables = {
         HUGO_VERSION      = "0.87.0"
         HONEYCOMB_DATASET = "cloudflare-wordle-tomhummel-com"
         HONEYCOMB_KEY     = var.wordle_honeycomb_key
+      }
+      r2_buckets = {
+        "WORDLE_CONTEST_ENTRIES" = aws_s3_bucket.wordle_contest_entries.id
       }
       compatibility_date = "2022-08-16"
     }
@@ -210,8 +289,6 @@ resource "cloudflare_record" "wordle" {
   ttl     = 1
   proxied = true
 }
-
-
 
 resource "cloudflare_pages_project" "movies" {
   account_id        = var.tomhummel_com_account_id
@@ -237,12 +314,14 @@ resource "cloudflare_pages_project" "movies" {
   }
   deployment_configs {
     preview {
+      fail_open = true
       environment_variables = {
         HUGO_VERSION = "0.101.0"
       }
       compatibility_date = "2022-10-30"
     }
     production {
+      fail_open = true
       environment_variables = {
         HUGO_VERSION = "0.101.0"
       }
@@ -293,12 +372,14 @@ resource "cloudflare_pages_project" "mlb" {
   }
   deployment_configs {
     preview {
+      fail_open = true
       environment_variables = {
         HUGO_VERSION = "0.99.1"
       }
       compatibility_date = "2022-08-15"
     }
     production {
+      fail_open = true
       environment_variables = {
         HUGO_VERSION = "0.99.1"
       }
