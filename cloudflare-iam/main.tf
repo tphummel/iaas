@@ -109,7 +109,6 @@ resource "cloudflare_api_token" "tomhummel_com" {
       data.cloudflare_api_token_permission_groups.all.account["Logs Write"],
       data.cloudflare_api_token_permission_groups.all.account["Pages Write"],
       data.cloudflare_api_token_permission_groups.all.account["Workers KV Storage Write"],
-      data.cloudflare_api_token_permission_groups.all.account["Workers R2 Storage Write"],
       data.cloudflare_api_token_permission_groups.all.account["Workers Scripts Write"],
       data.cloudflare_api_token_permission_groups.all.account["Email Routing Addresses Write"],
     ]
@@ -147,6 +146,21 @@ resource "cloudflare_api_token" "tomhummel_com" {
     ]
     resources = {
       "com.cloudflare.api.account.zone.${data.cloudflare_zone.tomhummel_com.id}" = "*"
+    }
+  }
+}
+
+resource "cloudflare_api_token" "tomhummel_com_r2" {
+  name = "iaas/cf_iam - tomhummel.com - r2 only"
+
+  # account
+  policy {
+    effect = "allow"
+    permission_groups = [
+      data.cloudflare_api_token_permission_groups.all.account["Workers R2 Storage Write"],
+    ]
+    resources = {
+      "com.cloudflare.api.account.${var.cloudflare_account_id}" = "*"
     }
   }
 }
