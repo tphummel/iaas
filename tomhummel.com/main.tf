@@ -36,15 +36,6 @@ resource "cloudflare_zone" "tomhummel_com" {
   zone       = "tomhummel.com"
 }
 
-variable apex_web_analytics_tag {
-  type = string
-}
-
-variable apex_web_analytics_token {
-  type = string
-  sensitive = true
-}
-
 resource "cloudflare_pages_project" "apex" {
   account_id        = var.tomhummel_com_account_id
   name              = "tomhummel-com"
@@ -53,8 +44,6 @@ resource "cloudflare_pages_project" "apex" {
     build_command   = "git submodule update --init --recursive && hugo"
     destination_dir = "public"
     root_dir        = ""
-    web_analytics_tag = var.apex_web_analytics_tag
-    web_analytics_token = var.apex_web_analytics_token
   }
   source {
     type = "github"
@@ -115,15 +104,6 @@ resource "cloudflare_record" "www" {
   proxied = true
 }
 
-variable data_web_analytics_tag {
-  type = string
-}
-
-variable data_web_analytics_token {
-  type = string
-  sensitive = true
-}
-
 resource "cloudflare_pages_project" "data" {
   account_id        = var.tomhummel_com_account_id
   name              = "data-tomhummel-com"
@@ -132,8 +112,6 @@ resource "cloudflare_pages_project" "data" {
     build_command   = "git submodule update --init --recursive && hugo"
     destination_dir = "public"
     root_dir        = ""
-    web_analytics_tag = var.data_web_analytics_tag
-    web_analytics_token = var.data_web_analytics_token
   }
   source {
     type = "github"
@@ -214,15 +192,6 @@ resource "aws_s3_bucket" "wordle_contest_entries" {
   bucket = "wordle-contest-entries"
 }
 
-variable wordle_web_analytics_tag {
-  type = string
-}
-
-variable wordle_web_analytics_token {
-  type = string
-  sensitive = true
-}
-
 resource "cloudflare_pages_project" "wordle" {
   account_id        = var.tomhummel_com_account_id
   name              = "wordle"
@@ -231,8 +200,6 @@ resource "cloudflare_pages_project" "wordle" {
     build_command   = "git submodule update --init --recursive && hugo"
     destination_dir = "public"
     root_dir        = "/"
-    web_analytics_tag = var.wordle_web_analytics_tag
-    web_analytics_token = var.wordle_web_analytics_token
   }
   source {
     type = "github"

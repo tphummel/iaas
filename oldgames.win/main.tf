@@ -37,15 +37,6 @@ resource "cloudflare_record" "txt" {
   proxied = false
 }
 
-variable web_analytics_tag {
-  type = string
-}
-
-variable web_analytics_token {
-  type = string
-  sensitive = true
-}
-
 resource "cloudflare_pages_project" "oldgames_win" {
   account_id        = var.oldgameswin_account_id
   name              = "oldgameswin"
@@ -54,8 +45,6 @@ resource "cloudflare_pages_project" "oldgames_win" {
     build_command   = "hugo"
     destination_dir = "public"
     root_dir        = "/"
-    web_analytics_tag = var.web_analytics_tag
-    web_analytics_token = var.web_analytics_token
   }
   source {
     type = "github"
