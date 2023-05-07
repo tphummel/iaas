@@ -119,6 +119,28 @@ resource "oci_core_security_list" "lab" {
     }
   }
 
+   ingress_security_rules {
+    # Options are supported only for ICMP ("1"), TCP ("6"), UDP ("17"), and ICMPv6 ("58").
+    protocol = 6
+    source   = "0.0.0.0/0"
+
+    tcp_options {
+      max = 80
+      min = 80
+    }
+  }
+
+     ingress_security_rules {
+    # Options are supported only for ICMP ("1"), TCP ("6"), UDP ("17"), and ICMPv6 ("58").
+    protocol = 6
+    source   = "0.0.0.0/0"
+
+    tcp_options {
+      max = 443
+      min = 443
+    }
+  }
+
   vcn_id = oci_core_vcn.lab.id
 }
 
@@ -131,55 +153,6 @@ resource "oci_core_subnet" "lab" {
   route_table_id             = oci_core_route_table.lab.id
   security_list_ids          = [oci_core_security_list.lab.id]
   vcn_id                     = oci_core_vcn.lab.id
-}
-
-locals {
-  userdata = <<-EOT
-    #!/bin/bash
-    set -e
-
-    # Add Caddy repository and install Caddy
-    yum install -y yum-utils
-    yum-config-manager --add-repo https://dl.caddyserver.com/rpm/stable/epel-7-aarch64.repo
-    yum install -y caddy
-
-    # Create a default "Hello World" HTML page
-    cat > /var/www/html/index.html << EOF2
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Welcome to my lab</title>
-    </head>
-    <body>
-        <h1>Welcome to my lab</h1>
-        <p>This is the default fallback page.</p>
-    </body>
-    </html>
-    EOF2
-
-    # Set up the Caddyfile with a fallthrough "Hello World" HTML page
-    cat > /etc/caddy/Caddyfile << EOF2
-    {
-    }
-
-    # Specific site configurations can be added in the conf.d directory
-    import /etc/caddy/conf.d/*
-
-    # Fallback for unmatched *.subdomain.maindomain.com
-    *.lab.tomhummel.com {
-        root * /var/www/html
-        file_server
-        try_files {path} {path}/ /index.html
-    }
-    EOF2
-
-    # Create the conf.d directory for specific site configurations
-    mkdir -p /etc/caddy/conf.d
-
-    # Enable and start Caddy as a systemd unit
-    systemctl enable caddy
-    systemctl start caddy
-  EOT
 }
 
 resource "oci_core_instance" "lab" {
@@ -218,7 +191,59 @@ resource "oci_core_instance" "lab" {
   }
   metadata = {
     ssh_authorized_keys = file(var.ssh_public_key_path)
-    userdata            = base64encode(local.userdata)
+    userdata            = <<-EOF
+#!/bin/bash
+set -e
+
+# Add Caddy repository and install Caddy
+yum install -y yum-utils
+dnf install 'dnf-command(copr)' -y
+dnf copr enable @caddy/caddy -y
+dnf install caddy -y
+
+mkdir -p /var/www/html
+
+# Create a default "Hello World" HTML page
+cat > /var/www/html/index.html << EOF2
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Welcome to my lab</title>
+</head>
+<body>
+    <h1>Welcome to my lab</h1>
+    <p>This is the default fallback page.</p>
+</body>
+</html>
+EOF2
+
+chown -R caddy:caddy /var/www/html
+
+# Set up the Caddyfile with a fallthrough "Hello World" HTML page
+cat > /etc/caddy/Caddyfile << EOF2
+{
+    email tohu@hey.com
+    auto_https off
+}
+
+# Specific site configurations can be added in the conf.d directory
+import /etc/caddy/conf.d/*
+
+# Fallback for unmatched *.subdomain.maindomain.com
+*.lab.tomhummel.com {
+    root * /var/www/html
+    file_server
+    try_files {path} {path}/ /index.html
+}
+EOF2
+
+mkdir -p /etc/caddy/conf.d
+
+chown -R caddy:caddy /etc/caddy
+
+systemctl enable caddy
+systemctl start caddy
+EOF
   }
 
   timeouts {
