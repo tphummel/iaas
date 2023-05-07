@@ -195,6 +195,9 @@ resource "oci_core_instance" "lab" {
 #!/bin/bash
 set -e
 
+systemctl disable firewalld
+systemctl stop firewalld
+
 # Add Caddy repository and install Caddy
 yum install -y yum-utils
 dnf install 'dnf-command(copr)' -y
@@ -229,11 +232,16 @@ cat > /etc/caddy/Caddyfile << EOF2
 # Specific site configurations can be added in the conf.d directory
 import /etc/caddy/conf.d/*
 
-# Fallback for unmatched *.subdomain.maindomain.com
 *.lab.tomhummel.com {
     root * /var/www/html
     file_server
     try_files {path} {path}/ /index.html
+}
+
+http://:80, https://:443 {
+	root * /var/www/html
+	file_server
+	try_files {path} /index.html
 }
 EOF2
 
