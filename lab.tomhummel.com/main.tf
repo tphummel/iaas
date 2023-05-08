@@ -155,6 +155,64 @@ resource "oci_core_subnet" "lab" {
   vcn_id                     = oci_core_vcn.lab.id
 }
 
+locals {
+  userdata = <<-EOT
+#!/bin/bash
+set -e
+
+sudo systemctl disable firewalld
+sudo systemctl stop firewalld
+
+# Add Caddy repository and install Caddy
+sudo dnf install -y 'dnf-command(copr)'
+sudo dnf copr enable -y @caddy/caddy
+sudo dnf install -y caddy
+
+# Create a default "Hello World" HTML page
+cat > /var/lib/caddy/index.html << EOF2
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Welcome</title>
+</head>
+<body>
+    <h1>Welcome</h1>
+    <p>You are here</p>
+</body>
+</html>
+EOF2
+
+sudo chown -R caddy:caddy /var/lib/caddy/
+
+cat > /etc/caddy/Caddyfile << EOF2
+{
+    email tohu@hey.com
+    # auto_https off
+}
+
+# Default site configuration
+https://lab.tomhummel.com {
+    root * /var/lib/caddy
+    file_server
+    try_files {path} {path}/ /index.html
+}
+
+# Specific site configurations can be added in the conf.d directory
+import /etc/caddy/conf.d/*
+EOF2
+
+sudo mkdir -p /etc/caddy/conf.d
+
+sudo chown -R caddy:caddy /etc/caddy
+
+# allow caddy to bind to port 80 and 443
+sudo setcap 'cap_net_bind_service=+ep' /usr/bin/caddy
+
+sudo systemctl enable caddy
+sudo systemctl start caddy
+EOT
+}
+
 resource "oci_core_instance" "lab" {
   availability_domain = var.availability_domain
   compartment_id      = var.tenancy_ocid
@@ -191,67 +249,7 @@ resource "oci_core_instance" "lab" {
   }
   metadata = {
     ssh_authorized_keys = file(var.ssh_public_key_path)
-    userdata            = <<-EOF
-#!/bin/bash
-set -e
-
-systemctl disable firewalld
-systemctl stop firewalld
-
-# Add Caddy repository and install Caddy
-yum install -y yum-utils
-dnf install 'dnf-command(copr)' -y
-dnf copr enable @caddy/caddy -y
-dnf install caddy -y
-
-mkdir -p /var/www/html
-
-# Create a default "Hello World" HTML page
-cat > /var/www/html/index.html << EOF2
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Welcome to my lab</title>
-</head>
-<body>
-    <h1>Welcome to my lab</h1>
-    <p>This is the default fallback page.</p>
-</body>
-</html>
-EOF2
-
-chown -R caddy:caddy /var/www/html
-
-# Set up the Caddyfile with a fallthrough "Hello World" HTML page
-cat > /etc/caddy/Caddyfile << EOF2
-{
-    email tohu@hey.com
-    auto_https off
-}
-
-# Specific site configurations can be added in the conf.d directory
-import /etc/caddy/conf.d/*
-
-*.lab.tomhummel.com {
-    root * /var/www/html
-    file_server
-    try_files {path} {path}/ /index.html
-}
-
-http://:80, https://:443 {
-	root * /var/www/html
-	file_server
-	try_files {path} /index.html
-}
-EOF2
-
-mkdir -p /etc/caddy/conf.d
-
-chown -R caddy:caddy /etc/caddy
-
-systemctl enable caddy
-systemctl start caddy
-EOF
+    userdata            = base64encode(local.userdata)
   }
 
   timeouts {
@@ -289,4 +287,10 @@ resource "oci_identity_policy" "lab" {
     "Allow dynamic-group ${oci_identity_dynamic_group.lab.name} to read buckets in tenancy",
     "Allow dynamic-group ${oci_identity_dynamic_group.lab.name} to manage objects in tenancy where any {request.permission='OBJECT_CREATE', request.permission='OBJECT_INSPECT'}"
   ]
+}
+
+# ssh opc@$(terraform output -raw lab_public_ip)
+output "lab_public_ip" {
+  description = "Public IP of Lab compute instance"
+  value       = oci_core_instance.lab.public_ip
 }

@@ -414,3 +414,10 @@ resource "cloudflare_record" "star_lab_tomhummel_com" {
   proxied = false
   zone_id = cloudflare_zone.tomhummel_com.id
 }
+resource "cloudflare_record" "lab_tomhummel_com" {
+  name    = "lab"
+  value   = data.oci_core_vnic.instance_vnic.public_ip_address
+  type    = "A"
+  proxied = false
+  zone_id = cloudflare_zone.tomhummel_com.id
+}
