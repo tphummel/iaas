@@ -9,6 +9,10 @@ terraform {
       source = "hashicorp/aws"
       version = "~> 4.0"
     }
+    oci = {
+      source  = "oracle/oci"
+      version = "4.119.0"
+    }
   }
   cloud {
     organization = "tom-hummel"
@@ -29,6 +33,24 @@ variable "cloudflare_api_token" {
 
 provider "cloudflare" {
   api_token = var.cloudflare_api_token
+}
+
+variable "oci_tenancy_ocid" {}
+variable "oci_user_ocid" {}
+variable "oci_fingerprint" {}
+variable "oci_private_key_path" {}
+variable "oci_region" {
+  default = "us-ashburn-1"
+}
+
+provider "oci" {
+  auth                 = "APIKey"
+  tenancy_ocid         = var.oci_tenancy_ocid
+  user_ocid            = var.oci_user_ocid
+  fingerprint          = var.oci_fingerprint
+  private_key_path     = var.oci_private_key_path
+  region               = var.oci_region
+  disable_auto_retries = true
 }
 
 resource "cloudflare_zone" "tomhummel_com" {
@@ -368,4 +390,34 @@ resource "cloudflare_record" "mlb" {
   type    = "CNAME"
   ttl     = 1
   proxied = true
+}
+
+data "oci_core_instances" "lab_servers" {
+  compartment_id = var.oci_tenancy_ocid
+  display_name = "lab"
+  state = "RUNNING"
+}
+
+data "oci_core_vnic_attachments" "instance_vnic_attachments" {
+  compartment_id = var.oci_tenancy_ocid
+  instance_id    = data.oci_core_instances.lab_servers.instances[0]["id"]
+}
+
+data "oci_core_vnic" "instance_vnic" {
+  vnic_id = data.oci_core_vnic_attachments.instance_vnic_attachments.vnic_attachments[0]["vnic_id"]
+}
+
+resource "cloudflare_record" "star_lab_tomhummel_com" {
+  name    = "*.lab"
+  value   = data.oci_core_vnic.instance_vnic.public_ip_address
+  type    = "A"
+  proxied = false
+  zone_id = cloudflare_zone.tomhummel_com.id
+}
+resource "cloudflare_record" "lab_tomhummel_com" {
+  name    = "lab"
+  value   = data.oci_core_vnic.instance_vnic.public_ip_address
+  type    = "A"
+  proxied = false
+  zone_id = cloudflare_zone.tomhummel_com.id
 }
