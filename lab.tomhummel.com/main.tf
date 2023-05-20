@@ -210,6 +210,8 @@ sudo setcap 'cap_net_bind_service=+ep' /usr/bin/caddy
 
 sudo systemctl enable caddy
 sudo systemctl start caddy
+
+bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)" -- --accept-all-defaults
 EOT
 }
 
