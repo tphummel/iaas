@@ -107,17 +107,17 @@ resource "oci_core_security_list" "lab" {
     destination = "0.0.0.0/0"
   }
 
-  ingress_security_rules {
-    # Options are supported only for ICMP ("1"), TCP ("6"), UDP ("17"), and ICMPv6 ("58").
-    protocol = 6
-    # source   = "0.0.0.0/0"
-    source = "${data.external.current_ip.result.ip}/32"
+  # ingress_security_rules {
+  #   # Options are supported only for ICMP ("1"), TCP ("6"), UDP ("17"), and ICMPv6 ("58").
+  #   protocol = 6
+  #   source   = "0.0.0.0/0"
+  #   # source = "${data.external.current_ip.result.ip}/32"
 
-    tcp_options {
-      max = 22
-      min = 22
-    }
-  }
+  #   tcp_options {
+  #     max = 22
+  #     min = 22
+  #   }
+  # }
 
    ingress_security_rules {
     # Options are supported only for ICMP ("1"), TCP ("6"), UDP ("17"), and ICMPv6 ("58").
