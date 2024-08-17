@@ -1,5 +1,5 @@
 terraform {
-  required_version = "= 1.3.6"
+  required_version = "= 1.3.8"
   required_providers {
     cloudflare = {
       source  = "cloudflare/cloudflare"
@@ -86,12 +86,14 @@ resource "cloudflare_pages_project" "apex" {
       environment_variables = {
         HUGO_VERSION = "0.87.0"
       }
+      usage_model = "unbound"
     }
     production {
       fail_open = true
       environment_variables = {
         HUGO_VERSION = "0.87.0"
       }
+      usage_model = "unbound"
     }
   }
 }
@@ -154,12 +156,14 @@ resource "cloudflare_pages_project" "data" {
       environment_variables = {
         HUGO_VERSION = "0.96.0"
       }
+      usage_model = "unbound"
     }
     production {
       fail_open = true
       environment_variables = {
         HUGO_VERSION = "0.96.0"
       }
+      usage_model = "unbound"
     }
   }
 }
@@ -227,7 +231,7 @@ resource "cloudflare_pages_project" "wordle" {
     type = "github"
     config {
       owner                         = "tphummel"
-      repo_name                     = "wordle-static"
+      repo_name                     = "wordle"
       production_branch             = "main"
       pr_comments_enabled           = true
       deployments_enabled           = true
@@ -248,6 +252,7 @@ resource "cloudflare_pages_project" "wordle" {
         "WORDLE_CONTEST_ENTRIES" = aws_s3_bucket.wordle_contest_entries_preview.id
       }
       compatibility_date = "2022-08-15"
+      usage_model = "unbound"
     }
     production {
       fail_open = true
@@ -260,6 +265,7 @@ resource "cloudflare_pages_project" "wordle" {
         "WORDLE_CONTEST_ENTRIES" = aws_s3_bucket.wordle_contest_entries.id
       }
       compatibility_date = "2022-08-16"
+      usage_model = "unbound"
     }
   }
 }
@@ -308,16 +314,20 @@ resource "cloudflare_pages_project" "movies" {
         HUGO_VERSION = "0.101.0"
       }
       compatibility_date = "2022-10-30"
+      usage_model = "unbound"
     }
     production {
       fail_open = true
       environment_variables = {
         HUGO_VERSION = "0.101.0"
+        HONEYCOMB_DATASET = "cloudflare-movies-tomhummel-com"
+        HUGO_ENV          = "production"
       }
       r2_buckets = {
         "R2" = "movies-tomhummel-com-images"
       }
       compatibility_date = "2022-10-30"
+      usage_model = "unbound"
     }
   }
 }
@@ -366,6 +376,7 @@ resource "cloudflare_pages_project" "mlb" {
         HUGO_VERSION = "0.99.1"
       }
       compatibility_date = "2022-08-15"
+      usage_model = "unbound"
     }
     production {
       fail_open = true
@@ -373,6 +384,7 @@ resource "cloudflare_pages_project" "mlb" {
         HUGO_VERSION = "0.99.1"
       }
       compatibility_date = "2022-08-16"
+      usage_model = "unbound"
     }
   }
 }
@@ -390,34 +402,4 @@ resource "cloudflare_record" "mlb" {
   type    = "CNAME"
   ttl     = 1
   proxied = true
-}
-
-data "oci_core_instances" "lab_servers" {
-  compartment_id = var.oci_tenancy_ocid
-  display_name = "lab"
-  state = "RUNNING"
-}
-
-data "oci_core_vnic_attachments" "instance_vnic_attachments" {
-  compartment_id = var.oci_tenancy_ocid
-  instance_id    = data.oci_core_instances.lab_servers.instances[0]["id"]
-}
-
-data "oci_core_vnic" "instance_vnic" {
-  vnic_id = data.oci_core_vnic_attachments.instance_vnic_attachments.vnic_attachments[0]["vnic_id"]
-}
-
-resource "cloudflare_record" "star_lab_tomhummel_com" {
-  name    = "*.lab"
-  value   = data.oci_core_vnic.instance_vnic.public_ip_address
-  type    = "A"
-  proxied = false
-  zone_id = cloudflare_zone.tomhummel_com.id
-}
-resource "cloudflare_record" "lab_tomhummel_com" {
-  name    = "lab"
-  value   = data.oci_core_vnic.instance_vnic.public_ip_address
-  type    = "A"
-  proxied = false
-  zone_id = cloudflare_zone.tomhummel_com.id
 }
